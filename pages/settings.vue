@@ -11,6 +11,16 @@ const { data: accountsData, refresh: refreshAccounts } = await useFetch<{
 
 const showAddForm = ref(false);
 
+const autoRefresh = ref(false);
+
+onMounted(() => {
+  autoRefresh.value = localStorage.getItem("autoRefresh") === "true";
+});
+
+watch(autoRefresh, (val) => {
+  localStorage.setItem("autoRefresh", String(val));
+});
+
 async function handleAdd(data: { name: string; token: string }) {
   await $fetch("/api/accounts", {
     method: "POST",
@@ -104,6 +114,23 @@ async function handleEdit(data: { name: string; token: string }) {
               </div>
             </template>
           </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">auto refresh</div>
+        <div class="flex items-center justify-between px-4 py-3">
+          <span class="text-xs text-stone-500">每 5 分钟自动刷新数据</span>
+          <button
+            class="relative h-5 w-9 rounded-full transition-colors"
+            :class="autoRefresh ? 'bg-green-500' : 'bg-gray-300'"
+            @click="autoRefresh = !autoRefresh"
+          >
+            <span
+              class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
+              :class="autoRefresh ? 'translate-x-4' : ''"
+            />
+          </button>
         </div>
       </section>
 

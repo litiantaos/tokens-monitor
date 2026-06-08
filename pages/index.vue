@@ -2,17 +2,54 @@
 import type { AccountQuotaResult, AccountUsageResult } from "~/types/quota";
 import { AUTO_REFRESH_MS, MCP_NAME_MAP, LEVEL_BADGE_MAP, LEVEL_BADGE_DEFAULT } from "~/types/quota";
 
-const { data: quotaData, refresh: refreshQuota } = await useFetch<{
+const {
+  data: quotaData,
+  refresh: refreshQuota,
+  status: quotaStatus,
+} = await useFetch<{
   accounts: AccountQuotaResult[];
   error?: string;
   timestamp?: number;
 }>("/api/quota", { key: "quota" });
 
-const { data: usageData, refresh: refreshUsage } = await useFetch<{
+const {
+  data: usageData,
+  refresh: refreshUsage,
+  status: usageStatus,
+} = await useFetch<{
   accounts: AccountUsageResult[];
   error?: string;
   timestamp?: number;
 }>("/api/usage", { key: "usage" });
+
+const isRefreshing = computed(
+  () => quotaStatus.value === "pending" || usageStatus.value === "pending",
+);
+
+function refreshAll() {
+  refreshQuota();
+  refreshUsage();
+}
+
+const autoRefresh = ref(false);
+
+onMounted(() => {
+  autoRefresh.value = localStorage.getItem("autoRefresh") === "true";
+  updateCountdowns();
+  countdownTimer = setInterval(updateCountdowns, 1000);
+});
+
+watch(autoRefresh, (val) => {
+  localStorage.setItem("autoRefresh", String(val));
+  if (val) {
+    autoRefreshTimer = setInterval(refreshAll, AUTO_REFRESH_MS);
+  } else {
+    if (autoRefreshTimer) {
+      clearInterval(autoRefreshTimer);
+      autoRefreshTimer = null;
+    }
+  }
+});
 
 function getUsageForAccount(name: string): AccountUsageResult | undefined {
   return usageData.value?.accounts?.find((a) => a.name === name);
@@ -82,15 +119,6 @@ const displayTimestamp = computed(() => {
   return ts ? new Date(ts).toLocaleTimeString() : "-";
 });
 
-onMounted(() => {
-  updateCountdowns();
-  countdownTimer = setInterval(updateCountdowns, 1000);
-  autoRefreshTimer = setInterval(() => {
-    refreshQuota();
-    refreshUsage();
-  }, AUTO_REFRESH_MS);
-});
-
 onUnmounted(() => {
   if (countdownTimer) clearInterval(countdownTimer);
   if (autoRefreshTimer) clearInterval(autoRefreshTimer);
@@ -101,7 +129,19 @@ onUnmounted(() => {
   <div>
     <div class="flex items-center justify-between">
       <h1 class="text-lg font-bold tracking-tight">Tokens Monitor</h1>
-      <AppButton icon="ri-settings-3-line text-sm" title="设置" @click="navigateTo('/settings')" />
+      <div class="flex items-center gap-2">
+        <AppButton
+          :icon="isRefreshing ? 'ri-refresh-line text-sm animate-spin' : 'ri-refresh-line text-sm'"
+          title="刷新"
+          :disabled="isRefreshing"
+          @click="refreshAll"
+        />
+        <AppButton
+          icon="ri-settings-3-line text-sm"
+          title="设置"
+          @click="navigateTo('/settings')"
+        />
+      </div>
     </div>
 
     <p class="mb-6 text-xs text-stone-400">

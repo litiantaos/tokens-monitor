@@ -1,4 +1,10 @@
-import type { Account, QuotaResponse, AccountQuotaResult, ModelUsageResponse, AccountUsageResult } from "~/types/quota";
+import type {
+  Account,
+  QuotaResponse,
+  AccountQuotaResult,
+  ModelUsageResponse,
+  AccountUsageResult,
+} from "~/types/quota";
 import { UNIT } from "~/types/quota";
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
@@ -128,7 +134,13 @@ export async function fetchModelUsageForAccount(account: Account): Promise<Accou
   try {
     const res = await fetchModelUsageAPI(account.token);
     if (!res.success || !res.data) {
-      return { name: account.name, totalTokens: 0, totalCalls: 0, hourlyTokens: [], error: res.msg || "请求失败" };
+      return {
+        name: account.name,
+        totalTokens: 0,
+        totalCalls: 0,
+        hourlyTokens: [],
+        error: res.msg || "请求失败",
+      };
     }
     return {
       name: account.name,
@@ -137,7 +149,13 @@ export async function fetchModelUsageForAccount(account: Account): Promise<Accou
       hourlyTokens: res.data.tokensUsage,
     };
   } catch (e: any) {
-    return { name: account.name, totalTokens: 0, totalCalls: 0, hourlyTokens: [], error: e?.message || "请求失败" };
+    return {
+      name: account.name,
+      totalTokens: 0,
+      totalCalls: 0,
+      hourlyTokens: [],
+      error: e?.message || "请求失败",
+    };
   }
 }
 
@@ -150,7 +168,13 @@ export async function fetchAllModelUsage(): Promise<AccountUsageResult[]> {
   return results.map((r, i) =>
     r.status === "fulfilled"
       ? r.value
-      : { name: accounts[i]!.name, totalTokens: 0, totalCalls: 0, hourlyTokens: [], error: "请求失败" },
+      : {
+          name: accounts[i]!.name,
+          totalTokens: 0,
+          totalCalls: 0,
+          hourlyTokens: [],
+          error: "请求失败",
+        },
   );
 }
 
