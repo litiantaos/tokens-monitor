@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 1rem;
+}
+
+* {
+  font-family:
+    "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", "Cascadia Code", "Menlo", "Consolas",
+    monospace;
+}
+
+body {
+  @apply bg-white text-sm leading-relaxed text-stone-900 antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-200;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone-400;
+}
+
+::selection {
+  @apply bg-blue-600 text-white;
+}
+
+.card {
+  @apply border border-gray-200 bg-white;
+}
+
+.card-header {
+  @apply flex items-center justify-between border-b border-gray-200 px-4 py-3 text-sm font-semibold tracking-wide text-stone-600 uppercase;
+}
+
+.section-header {
+  @apply border-b border-gray-200 px-4 py-3 text-xs font-semibold tracking-wide text-stone-600 uppercase;
+}
+
+.input {
+  @apply w-full border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500;
+}
+
+.countdown-text {
+  @apply text-2xs text-stone-400 tabular-nums;
+}
