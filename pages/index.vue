@@ -191,7 +191,7 @@ onUnmounted(() => {
 
             <div v-if="getUsageForAccount(acc.name)" class="border-t border-gray-100 pt-3">
               <div class="mb-4 flex items-center justify-between text-xs">
-                <span class="text-stone-500">7d usage</span>
+                <span class="text-stone-500">30d usage</span>
                 <span class="text-stone-400 tabular-nums">
                   {{ formatCalls(getUsageForAccount(acc.name)!.totalCalls) }} calls ·
                   {{ formatTokens(getUsageForAccount(acc.name)!.totalTokens) }} tokens

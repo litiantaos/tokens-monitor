@@ -112,7 +112,7 @@ export async function fetchQuotaForAccount(account: Account): Promise<AccountQuo
 export async function fetchModelUsageAPI(token: string): Promise<ModelUsageResponse> {
   const now = new Date();
   const start = new Date(now);
-  start.setDate(start.getDate() - 6);
+  start.setDate(start.getDate() - 29);
   start.setHours(0, 0, 0, 0);
 
   const fmt = (d: Date) => {
