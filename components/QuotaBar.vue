@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getQuotaColor } from "~/types/quota";
+import { getQuotaColor } from "~/utils/quota";
 
 const props = defineProps<{
   label: string;

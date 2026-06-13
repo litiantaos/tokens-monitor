@@ -16,13 +16,13 @@ export default defineEventHandler(async (event) => {
     return {
       valid: false,
       error: res.msg || "验证失败",
-      expired: res.code === 1001,
     };
-  } catch (e: any) {
-    const data = e?.response?._data;
+  } catch (e) {
+    const err = e as { response?: { _data?: { code?: number } }; message?: string };
+    const data = err?.response?._data;
     if (data?.code === 1001) {
-      return { valid: false, error: "API Key 无效", expired: true };
+      return { valid: false, error: "API Key 无效" };
     }
-    return { valid: false, error: e?.message || "连接失败" };
+    return { valid: false, error: err?.message || "连接失败" };
   }
 });

@@ -1,37 +1,14 @@
 <script setup lang="ts">
-import type { AccountQuotaResult, AccountUsageResult } from "~/types/quota";
-import { AUTO_REFRESH_MS, MCP_NAME_MAP, LEVEL_BADGE_MAP, LEVEL_BADGE_DEFAULT } from "~/types/quota";
+import type { AccountUsageResult } from "~/types/quota";
+import { AUTO_REFRESH_MS, MCP_NAME_MAP, LEVEL_BADGE_MAP, LEVEL_BADGE_DEFAULT } from "~/utils/quota";
 
-const {
-  data: quotaData,
-  refresh: refreshQuota,
-  status: quotaStatus,
-} = await useFetch<{
-  accounts: AccountQuotaResult[];
-  error?: string;
-  timestamp?: number;
-}>("/api/quota", { key: "quota" });
-
-const {
-  data: usageData,
-  refresh: refreshUsage,
-  status: usageStatus,
-} = await useFetch<{
-  accounts: AccountUsageResult[];
-  error?: string;
-  timestamp?: number;
-}>("/api/usage", { key: "usage" });
-
-const isRefreshing = computed(
-  () => quotaStatus.value === "pending" || usageStatus.value === "pending",
-);
-
-function refreshAll() {
-  refreshQuota();
-  refreshUsage();
-}
+const { quota: quotaData, usage: usageData, isRefreshing, refreshAll } = useMonitor();
 
 const autoRefresh = ref(false);
+
+const countdowns = ref<Record<string, string>>({});
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+let autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
 onMounted(() => {
   autoRefresh.value = localStorage.getItem("autoRefresh") === "true";
@@ -52,12 +29,12 @@ watch(autoRefresh, (val) => {
 });
 
 function getUsageForAccount(name: string): AccountUsageResult | undefined {
-  return usageData.value?.accounts?.find((a) => a.name === name);
+  return usageData.value.accounts.find((a) => a.name === name);
 }
 
 const globalMax = computed(() => {
-  const accounts = usageData.value?.accounts;
-  if (!accounts?.length) return 1;
+  const accounts = usageData.value.accounts;
+  if (!accounts.length) return 1;
   let max = 1;
   for (const acc of accounts) {
     for (const v of acc.hourlyTokens) {
@@ -78,10 +55,6 @@ function formatCalls(n: number): string {
   return n.toLocaleString();
 }
 
-const countdowns = ref<Record<string, string>>({});
-let countdownTimer: ReturnType<typeof setInterval> | null = null;
-let autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
-
 function formatCountdown(ms: number | undefined): string {
   if (!ms || isNaN(ms)) return "-";
   const diff = ms - Date.now();
@@ -99,7 +72,7 @@ function formatCountdown(ms: number | undefined): string {
 }
 
 function updateCountdowns() {
-  if (!quotaData.value?.accounts) return;
+  if (!quotaData.value.accounts.length) return;
   for (const acc of quotaData.value.accounts) {
     if (acc.fiveHour)
       countdowns.value[`${acc.name}-5h`] = formatCountdown(acc.fiveHour.nextResetTime);
@@ -115,7 +88,7 @@ function getBadge(level: string) {
 }
 
 const displayTimestamp = computed(() => {
-  const ts = quotaData.value?.timestamp;
+  const ts = quotaData.value.timestamp;
   return ts ? new Date(ts).toLocaleTimeString() : "-";
 });
 
@@ -148,15 +121,12 @@ onUnmounted(() => {
       GLM Coding Plan Usage ｜ 更新于 {{ displayTimestamp }}
     </p>
 
-    <div
-      v-if="quotaData?.error && !quotaData.accounts?.length"
-      class="card p-3 text-sm text-red-600"
-    >
+    <div v-if="quotaData.error && !quotaData.accounts.length" class="card p-3 text-sm text-red-600">
       <i class="ri-error-warning-line mr-1"></i>{{ quotaData.error }}
     </div>
 
     <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-      <div v-for="acc in quotaData?.accounts" :key="acc.name" class="card">
+      <div v-for="acc in quotaData.accounts" :key="acc.name" class="card">
         <div class="card-header">
           <span class="truncate">{{ acc.name }}</span>
           <span

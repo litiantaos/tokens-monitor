@@ -1,3 +1,5 @@
+import { readFile, writeFile } from "fs/promises";
+import { join } from "path";
 import type {
   Account,
   QuotaResponse,
@@ -5,9 +7,7 @@ import type {
   ModelUsageResponse,
   AccountUsageResult,
 } from "~/types/quota";
-import { UNIT } from "~/types/quota";
-import { readFile, writeFile } from "fs/promises";
-import { join } from "path";
+import { UNIT } from "~/utils/quota";
 
 let accountsLock: Promise<void> = Promise.resolve();
 
@@ -98,13 +98,18 @@ export async function fetchQuotaForAccount(account: Account): Promise<AccountQuo
     }
 
     return result;
-  } catch (e: any) {
-    const isAuthError = e?.response?._data?.code === 1001 || e?.statusCode === 401;
+  } catch (e) {
+    const err = e as {
+      response?: { _data?: { code?: number } };
+      statusCode?: number;
+      message?: string;
+    };
+    const isAuthError = err?.response?._data?.code === 1001 || err?.statusCode === 401;
     return {
       name: account.name,
       level: "unknown",
       expired: isAuthError,
-      error: isAuthError ? "API Key 无效" : String(e?.message || e),
+      error: isAuthError ? "API Key 无效" : String(err?.message || e),
     };
   }
 }
@@ -148,13 +153,14 @@ export async function fetchModelUsageForAccount(account: Account): Promise<Accou
       totalCalls: res.data.totalUsage.totalModelCallCount,
       hourlyTokens: res.data.tokensUsage,
     };
-  } catch (e: any) {
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "";
     return {
       name: account.name,
       totalTokens: 0,
       totalCalls: 0,
       hourlyTokens: [],
-      error: e?.message || "请求失败",
+      error: message || "请求失败",
     };
   }
 }

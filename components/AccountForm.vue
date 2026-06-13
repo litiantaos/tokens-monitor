@@ -35,8 +35,9 @@ async function testToken() {
       method: "POST",
       body: { token: token.value },
     });
-  } catch (e: any) {
-    testResult.value = { valid: false, error: e?.data?.message || "测试失败" };
+  } catch (e) {
+    const err = e as { data?: { message?: string } };
+    testResult.value = { valid: false, error: err?.data?.message || "测试失败" };
   }
   testing.value = false;
 }
